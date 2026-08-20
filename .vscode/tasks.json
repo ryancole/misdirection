@@ -1,65 +1,63 @@
 {
   "version": "2.0.0",
+
+  // These delegate to etc/*.ps1 rather than spelling out the FQBN, so
+  // the USB Type for each sketch lives in exactly one place
+  // (the $SketchUsbType table in etc/common.ps1) and the scripts work
+  // the same from a plain terminal.
+  "options": {
+    "cwd": "${workspaceFolder}"
+  },
+
+  "presentation": { "clear": true },
+
   "tasks": [
     {
-      "label": "Arduino: Build (USB HID)",
+      "label": "Arduino: Build",
       "type": "shell",
       "group": { "kind": "build", "isDefault": true },
-      "command": "${config:arduinoCli.path}",
+      "command": "pwsh",
       "args": [
-        "compile",
-        "--fqbn", "teensy:avr:teensy41:usb=hid,speed=600,opt=o2std,keys=en-us",
-        "--build-path", "${workspaceFolder}/.build/${fileBasenameNoExtension}",
-        "${fileDirname}"
+        "-NoProfile", "-ExecutionPolicy", "Bypass",
+        "-File", "${workspaceFolder}/etc/build.ps1",
+        "${fileBasenameNoExtension}"
       ],
       "problemMatcher": "$gcc",
-      "detail": "Compile the open sketch as Keyboard + Mouse + Joystick."
+      "detail": "Compile the open sketch with its recorded USB Type."
     },
     {
-      "label": "Arduino: Build (USB Serial)",
+      "label": "Arduino: Build all",
       "type": "shell",
-      "group": "build",
-      "command": "${config:arduinoCli.path}",
+      "command": "pwsh",
       "args": [
-        "compile",
-        "--fqbn", "teensy:avr:teensy41:usb=serial,speed=600,opt=o2std,keys=en-us",
-        "--build-path", "${workspaceFolder}/.build/${fileBasenameNoExtension}",
-        "${fileDirname}"
+        "-NoProfile", "-ExecutionPolicy", "Bypass",
+        "-File", "${workspaceFolder}/etc/build.ps1",
+        "-All"
       ],
       "problemMatcher": "$gcc",
-      "detail": "Compile the open sketch as CDC serial only. Use for src/uart_echo."
+      "detail": "Compile every sketch in src/. Cheap sanity check before a commit."
     },
     {
-      "label": "Arduino: Upload (USB HID)",
+      "label": "Arduino: Upload",
       "type": "shell",
-      "command": "${config:arduinoCli.path}",
+      "command": "pwsh",
       "args": [
-        "compile", "--upload", "--protocol", "teensy",
-        "--fqbn", "teensy:avr:teensy41:usb=hid,speed=600,opt=o2std,keys=en-us",
-        "--build-path", "${workspaceFolder}/.build/${fileBasenameNoExtension}",
-        "${fileDirname}"
+        "-NoProfile", "-ExecutionPolicy", "Bypass",
+        "-File", "${workspaceFolder}/etc/upload.ps1",
+        "${fileBasenameNoExtension}"
       ],
       "problemMatcher": "$gcc",
-      "detail": "Compile and flash the open sketch as Keyboard + Mouse + Joystick."
-    },
-    {
-      "label": "Arduino: Upload (USB Serial)",
-      "type": "shell",
-      "command": "${config:arduinoCli.path}",
-      "args": [
-        "compile", "--upload", "--protocol", "teensy",
-        "--fqbn", "teensy:avr:teensy41:usb=serial,speed=600,opt=o2std,keys=en-us",
-        "--build-path", "${workspaceFolder}/.build/${fileBasenameNoExtension}",
-        "${fileDirname}"
-      ],
-      "problemMatcher": "$gcc",
-      "detail": "Compile and flash the open sketch as CDC serial only."
+      "detail": "Compile and flash the open sketch. Reflashes the board the target PC sees."
     },
     {
       "label": "Arduino: List boards",
       "type": "shell",
-      "command": "${config:arduinoCli.path}",
-      "args": ["board", "list"],
+      "command": "pwsh",
+      "args": [
+        "-NoProfile", "-ExecutionPolicy", "Bypass",
+        "-File", "${workspaceFolder}/etc/upload.ps1",
+        "-ListPorts"
+      ],
       "problemMatcher": [],
       "detail": "Shows the Teensy port and the PL2303 COM port."
     }

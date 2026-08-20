@@ -1,8 +1,7 @@
 {
-  // arduino-cli ships inside the Arduino IDE 2.x install. Nothing to
-  // install separately; the IDE and VS Code drive the same toolchain
-  // and the same ~/AppData/Local/Arduino15 package tree.
-  "arduinoCli.path": "${env:LOCALAPPDATA}/Programs/Arduino IDE/resources/app/lib/backend/resources/arduino-cli.exe",
+  // arduino-cli is located by etc/common.ps1, which checks the
+  // Arduino IDE 2.x install first and falls back to PATH. Deliberately
+  // not duplicated here.
 
   "files.associations": {
     "*.ino": "cpp"
