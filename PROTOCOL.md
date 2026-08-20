@@ -100,3 +100,69 @@ PANIC (0x00) is honored regardless of arm state: `releaseAll()`,
 firmware and host agree again. Byte 0x00 alone is also treated as a
 panic by the naive step-4 bridge, so the same habit works at both
 stages.
+
+## Host contract
+
+Points a host author will otherwise have to discover by experiment.
+
+**Keys are HID usage codes, not ASCII and not Windows virtual-key
+codes.** `a` is 0x04, not 0x61 and not 0x41. Mapping from whatever your
+capture layer produces is the host's job; the firmware deliberately does
+no translation, which is what keeps layouts and dead keys out of it.
+
+**Connect sequence.** The firmware emits a PONG frame at boot, so a host
+that sees one knows the board just reset. Send SCREEN_SIZE before the
+first MOUSE_MOVE; until then coordinates are interpreted against the
+firmware's 1920x1080 default.
+
+**Nothing takes effect until pin 2 is grounded.** While disarmed, input
+messages are dropped and the firmware answers NACK(4), throttled to one
+per 500 ms so a streaming host does not swamp the return channel.
+PANIC, PING, and SCREEN_SIZE are honored regardless.
+
+**Fire and forget.** There is no per-frame ACK and you should not wait
+for one -- a round trip per mouse update would cost more than the moves
+are worth. NACK arrives only on error, asynchronously. Use PING/PONG for
+liveness if you want it.
+
+**Payloads over 16 bytes are rejected** with NACK(3) and the parser
+resyncs. The framing allows `len` up to 255, but nothing defined needs
+more than 4, so a corrupt length byte cannot swallow a long run of
+stream.
+
+**Serial settings:** 115200 8N1, no flow control. DTR/RTS are not used.
+
+**The idle-release watchdog is off by default** (`IDLE_RELEASE_MS = 0`).
+Turn it on only once the host sends a keepalive, or a legitimate long
+modifier hold will be released out from under it.
+
+## Test vectors
+
+Encode these and compare bytes; no hardware required. Checksums are
+`(type + len + payload) & 0xFF`.
+
+The same vectors are in `etc/protocol-vectors.json` in machine-readable
+form, with each frame's decoded field values alongside its bytes, so a
+test suite in any language can assert both directions. Both come from
+`etc/gen-vectors.py`; regenerate rather than hand-editing either.
+
+| Message | Bytes |
+|---------|-------|
+| PANIC                        | `AB 00 00 00` |
+| KEY_DOWN a (usage 0x04)      | `AB 01 01 04 06` |
+| KEY_UP a                     | `AB 02 01 04 07` |
+| KEY_DOWN LeftShift (0xE1)    | `AB 01 01 E1 E3` |
+| KEY_UP LeftShift             | `AB 02 01 E1 E4` |
+| MOUSE_MOVE to (960, 540)     | `AB 03 04 C0 03 1C 02 E8` |
+| MOUSE_MOVE to (0, 0)         | `AB 03 04 00 00 00 00 07` |
+| MOUSE_BTN left down          | `AB 04 01 01 06` |
+| MOUSE_BTN all released       | `AB 04 01 00 05` |
+| MOUSE_WHEEL up 1             | `AB 05 02 01 00 08` |
+| MOUSE_WHEEL down 1           | `AB 05 02 FF 00 06` |
+| SCREEN_SIZE 1920x1080        | `AB 06 04 80 07 38 04 CD` |
+| PING                         | `AB 07 00 07` |
+| PONG v1 (Teensy -> host)     | `AB 80 01 01 82` |
+| NACK checksum (Teensy -> host) | `AB 81 01 01 83` |
+
+A shift-drag, end to end, is just these in order: KEY_DOWN 0xE1,
+MOUSE_BTN 0x01, a run of MOUSE_MOVE, MOUSE_BTN 0x00, KEY_UP 0xE1.

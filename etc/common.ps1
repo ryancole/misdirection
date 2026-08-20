@@ -11,7 +11,8 @@ $script:SrcRoot  = Join-Path $RepoRoot 'src'
 # built as usb=hid gives the target PC no CDC port. Keeping it here
 # means it travels with the repo instead of living in IDE menu state.
 $script:SketchUsbType = @{
-    'mind_control'      = 'hid'      # HID smoke test
+    'mind_control'      = 'hid'      # the real firmware
+    'hid_smoke_test'    = 'hid'      # step 2 diagnostic
     'uart_echo'         = 'serial'   # UART only, no HID linked in
     'uart_to_hid_naive' = 'hid'      # naive UART -> HID bridge
 }
