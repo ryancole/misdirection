@@ -1,0 +1,33 @@
+# Arduino IDE 2.x compiles into a temp dir, not the sketch folder, so
+# these only show up if you use Sketch -> Export Compiled Binary.
+build/
+*.hex
+*.elf
+*.eep
+*.lst
+*.sym
+*.map
+
+# Do NOT ignore sketch.json. It records the FQBN, which encodes the
+# USB Type (usb=hid, usb=serial, ...). Each sketch here wants a
+# different one, and that is the setting most likely to be wrong.
+
+# arduino-cli build output (tasks.json points here)
+.build/
+
+# C# host app (step 6, lands in src/host/)
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# .vscode/ is deliberately NOT ignored -- tasks.json pins the FQBN
+# (and therefore the USB Type) per build, and c_cpp_properties.json
+# pins the IntelliSense defines to match.
+
+# Editor / OS
+*.bak
+*~
+Thumbs.db
+desktop.ini

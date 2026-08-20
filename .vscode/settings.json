@@ -1,0 +1,22 @@
+{
+  // arduino-cli ships inside the Arduino IDE 2.x install. Nothing to
+  // install separately; the IDE and VS Code drive the same toolchain
+  // and the same ~/AppData/Local/Arduino15 package tree.
+  "arduinoCli.path": "${env:LOCALAPPDATA}/Programs/Arduino IDE/resources/app/lib/backend/resources/arduino-cli.exe",
+
+  "files.associations": {
+    "*.ino": "cpp"
+  },
+
+  "files.exclude": {
+    "**/.build": true
+  },
+  "search.exclude": {
+    "**/.build": true
+  },
+
+  // The PL2303 cable's COM port. Serial Monitor picks this up as a
+  // default; check "Arduino: List boards" if it moves.
+  "serialMonitor.defaultBaudRate": 115200,
+  "serialMonitor.lineEnding": "\r\n"
+}

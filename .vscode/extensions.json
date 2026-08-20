@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    // IntelliSense for the .ino/.cpp side. Already installed.
+    "ms-vscode.cpptools",
+    // Replaces PuTTY for step 3. Talks to the PL2303 COM port in a
+    // VS Code panel, so the echo test and the build live in one window.
+    "ms-vscode.vscode-serial-monitor"
+  ]
+}

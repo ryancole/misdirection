@@ -1,0 +1,71 @@
+{
+  "version": 4,
+  "configurations": [
+    {
+      // Defines and include paths lifted verbatim from the
+      // compile_commands.json that arduino-cli emits, so IntelliSense
+      // sees exactly what the compiler sees. Switch configurations from
+      // the status bar when you switch a sketch's USB Type -- the
+      // USB_HID / USB_SERIAL define is what gates Keyboard, Mouse, and
+      // the contents of usb_desc.h.
+      "name": "Teensy 4.1 (USB HID)",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${env:LOCALAPPDATA}/Arduino15/packages/teensy/hardware/avr/1.62.0/cores/teensy4",
+        "${env:LOCALAPPDATA}/Arduino15/packages/teensy/hardware/avr/1.62.0/libraries/**"
+      ],
+      "forcedInclude": [
+        "${env:LOCALAPPDATA}/Arduino15/packages/teensy/hardware/avr/1.62.0/cores/teensy4/Arduino.h"
+      ],
+      "defines": [
+        "ARDUINO=10607",
+        "ARDUINO_TEENSY41",
+        "F_CPU=600000000",
+        "LAYOUT_US_ENGLISH",
+        "TEENSYDUINO=160",
+        "USB_HID",
+        "__IMXRT1062__"
+      ],
+      "compilerPath": "${env:LOCALAPPDATA}/Arduino15/packages/teensy/tools/teensy-compile/15.2.1/arm/bin/arm-none-eabi-g++.exe",
+      "compilerArgs": [
+        "-mcpu=cortex-m7",
+        "-mthumb",
+        "-mfloat-abi=hard",
+        "-mfpu=fpv5-d16"
+      ],
+      "cStandard": "gnu11",
+      "cppStandard": "gnu++17",
+      "intelliSenseMode": "gcc-arm"
+    },
+    {
+      "name": "Teensy 4.1 (USB Serial)",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${env:LOCALAPPDATA}/Arduino15/packages/teensy/hardware/avr/1.62.0/cores/teensy4",
+        "${env:LOCALAPPDATA}/Arduino15/packages/teensy/hardware/avr/1.62.0/libraries/**"
+      ],
+      "forcedInclude": [
+        "${env:LOCALAPPDATA}/Arduino15/packages/teensy/hardware/avr/1.62.0/cores/teensy4/Arduino.h"
+      ],
+      "defines": [
+        "ARDUINO=10607",
+        "ARDUINO_TEENSY41",
+        "F_CPU=600000000",
+        "LAYOUT_US_ENGLISH",
+        "TEENSYDUINO=160",
+        "USB_SERIAL",
+        "__IMXRT1062__"
+      ],
+      "compilerPath": "${env:LOCALAPPDATA}/Arduino15/packages/teensy/tools/teensy-compile/15.2.1/arm/bin/arm-none-eabi-g++.exe",
+      "compilerArgs": [
+        "-mcpu=cortex-m7",
+        "-mthumb",
+        "-mfloat-abi=hard",
+        "-mfpu=fpv5-d16"
+      ],
+      "cStandard": "gnu11",
+      "cppStandard": "gnu++17",
+      "intelliSenseMode": "gcc-arm"
+    }
+  ]
+}

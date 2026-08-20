@@ -1,0 +1,67 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Arduino: Build (USB HID)",
+      "type": "shell",
+      "group": { "kind": "build", "isDefault": true },
+      "command": "${config:arduinoCli.path}",
+      "args": [
+        "compile",
+        "--fqbn", "teensy:avr:teensy41:usb=hid,speed=600,opt=o2std,keys=en-us",
+        "--build-path", "${workspaceFolder}/.build/${fileBasenameNoExtension}",
+        "${fileDirname}"
+      ],
+      "problemMatcher": "$gcc",
+      "detail": "Compile the open sketch as Keyboard + Mouse + Joystick."
+    },
+    {
+      "label": "Arduino: Build (USB Serial)",
+      "type": "shell",
+      "group": "build",
+      "command": "${config:arduinoCli.path}",
+      "args": [
+        "compile",
+        "--fqbn", "teensy:avr:teensy41:usb=serial,speed=600,opt=o2std,keys=en-us",
+        "--build-path", "${workspaceFolder}/.build/${fileBasenameNoExtension}",
+        "${fileDirname}"
+      ],
+      "problemMatcher": "$gcc",
+      "detail": "Compile the open sketch as CDC serial only. Use for src/uart_echo."
+    },
+    {
+      "label": "Arduino: Upload (USB HID)",
+      "type": "shell",
+      "command": "${config:arduinoCli.path}",
+      "args": [
+        "compile", "--upload", "--protocol", "teensy",
+        "--fqbn", "teensy:avr:teensy41:usb=hid,speed=600,opt=o2std,keys=en-us",
+        "--build-path", "${workspaceFolder}/.build/${fileBasenameNoExtension}",
+        "${fileDirname}"
+      ],
+      "problemMatcher": "$gcc",
+      "detail": "Compile and flash the open sketch as Keyboard + Mouse + Joystick."
+    },
+    {
+      "label": "Arduino: Upload (USB Serial)",
+      "type": "shell",
+      "command": "${config:arduinoCli.path}",
+      "args": [
+        "compile", "--upload", "--protocol", "teensy",
+        "--fqbn", "teensy:avr:teensy41:usb=serial,speed=600,opt=o2std,keys=en-us",
+        "--build-path", "${workspaceFolder}/.build/${fileBasenameNoExtension}",
+        "${fileDirname}"
+      ],
+      "problemMatcher": "$gcc",
+      "detail": "Compile and flash the open sketch as CDC serial only."
+    },
+    {
+      "label": "Arduino: List boards",
+      "type": "shell",
+      "command": "${config:arduinoCli.path}",
+      "args": ["board", "list"],
+      "problemMatcher": [],
+      "detail": "Shows the Teensy port and the PL2303 COM port."
+    }
+  ]
+}
