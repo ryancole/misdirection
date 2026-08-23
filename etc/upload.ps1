@@ -9,7 +9,7 @@ matches the protocol the teensy-discovery tool reports; pass -Port if
 you need to name it explicitly.
 
 Remember which end is which: the Teensy's micro-USB goes to the TARGET
-PC, so flashing changes what the target sees. Keep mind_control handy --
+PC, so flashing changes what the target sees. Keep misdirection handy --
 reflashing it tells you in seconds whether a fault is HID or the link.
 
 .EXAMPLE
