@@ -43,6 +43,51 @@ Same framing.
 Reason codes: 1 bad checksum, 2 unknown type, 3 bad length,
 4 disarmed, 5 key rollover full.
 
+## Reserved type codes (never on the wire)
+
+| type | name       | len | payload                                        |
+|------|------------|-----|------------------------------------------------|
+| 0x7F | FILE_DELAY | 4   | micros:u32, time since the previous file frame |
+
+FILE_DELAY exists only inside `.msdr` files (see below). It is a
+file-format record that borrows the frame encoding so a file is a plain
+sequence of frames, and it is **never valid on the wire**:
+
+- The host must not send it. A sender replaying a file sleeps for the
+  delay and skips the frame.
+- The firmware does not know the code. If one arrives anyway it is
+  handled exactly like any other unknown type: NACK(2) while armed, or
+  the throttled NACK(4) while disarmed, with no HID side effects either
+  way. The parser resyncs on the next frame as usual.
+- Future wire message types must not take 0x7F. It is reserved in this
+  table so the wire and file namespaces cannot collide.
+
+The payload is a little-endian u32 of microseconds elapsed since the
+previous frame in the file (0 means "no gap"; 0xFFFFFFFF is about 71
+minutes). The checksum is the normal `(type + len + payload) & 0xFF`.
+Adding or removing FILE_DELAY records does not change the protocol
+version, because the wire protocol is unchanged.
+
+## `.msdr` files
+
+`.msdr` is the container the host client uses to save a message
+sequence for later replay. It is defined by the client, not the
+firmware; it is described here only so FILE_DELAY has context.
+
+```
+"MSDR"   4 bytes   magic
+u8       1 byte    file format version
+u8       1 byte    protocol version the frames were recorded against
+frames   ...       wire frames back to back, each [0xAB][type][len][payload][sum]
+```
+
+The 6-byte header is followed by frames exactly as they would appear on
+Serial1, interleaved with FILE_DELAY records that carry the gap before
+the frame that follows them. A replayer reads frames in order: on
+FILE_DELAY it sleeps for `micros` and emits nothing; on anything else it
+writes the frame bytes to the wire unchanged. A file with no FILE_DELAY
+records is a valid file that replays as fast as the link allows.
+
 ## Keyboard state lives in the firmware
 
 Raw HID usage codes go on the wire; the firmware owns the report. This
@@ -163,6 +208,15 @@ test suite in any language can assert both directions. Both come from
 | PING                         | `AB 07 00 07` |
 | PONG v1 (Teensy -> host)     | `AB 80 01 01 82` |
 | NACK checksum (Teensy -> host) | `AB 81 01 01 83` |
+| FILE_DELAY 0 us (file only)  | `AB 7F 04 00 00 00 00 83` |
+| FILE_DELAY 1 us (file only)  | `AB 7F 04 01 00 00 00 84` |
+| FILE_DELAY 1000 us (file only) | `AB 7F 04 E8 03 00 00 6E` |
+| FILE_DELAY 16667 us (file only) | `AB 7F 04 1B 41 00 00 DF` |
+| FILE_DELAY 0xFFFFFFFF us (file only) | `AB 7F 04 FF FF FF FF 7F` |
+
+The FILE_DELAY rows are for checking a `.msdr` encoder and decoder only;
+sending one to the firmware gets a NACK, which the firmware test suite
+in `test/` pins down.
 
 A shift-drag, end to end, is just these in order: KEY_DOWN 0xE1,
 MOUSE_BTN 0x01, a run of MOUSE_MOVE, MOUSE_BTN 0x00, KEY_UP 0xE1.

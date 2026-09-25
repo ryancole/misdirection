@@ -53,6 +53,10 @@ etc/
   common.ps1           shared helpers, incl. the per-sketch USB Type table
   gen-vectors.py       regenerates the protocol test vectors
   protocol-vectors.json
+  test.ps1             build and run the host-side firmware tests
+test/
+  protocol_test.cpp    parser/dispatch tests that #include the real sketch
+  stubs/Arduino.h      just enough fake Teensy core to compile it natively
 PROTOCOL.md            the host <-> Teensy wire protocol
 ```
 
@@ -90,6 +94,20 @@ Both scripts take `-UsbType` to override the recorded default, `-Clean` to wipe
 the build cache first, and `-DryRun` to print the `arduino-cli` command without
 running it.
 
+## Testing
+
+The parser and dispatch logic is tested natively, without a board:
+
+```bash
+etc\test.ps1
+```
+
+[test/protocol_test.cpp](test/protocol_test.cpp) `#include`s the real
+`misdirection.ino` over a stub Teensy core in [test/stubs](test/stubs), feeds it
+byte streams, and checks what came back on `Serial1` and what reached the fake
+`Keyboard`/`Mouse`. It needs Visual Studio with the C++ workload (found via
+`vswhere`). In VS Code it is the default test task (**Firmware: Test**).
+
 ### From VS Code
 
 [.vscode/tasks.json](.vscode/tasks.json) wires the same scripts to tasks that
@@ -99,6 +117,7 @@ act on the open sketch:
 - **Arduino: Build all** — compile every sketch in `src/`
 - **Arduino: Upload** — compile and flash the open sketch
 - **Arduino: List boards** — show the Teensy and PL2303 ports
+- **Firmware: Test** (default test task) — build and run `test/` natively
 
 ## Wiring
 

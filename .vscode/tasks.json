@@ -50,6 +50,18 @@
       "detail": "Compile and flash the open sketch. Reflashes the board the target PC sees."
     },
     {
+      "label": "Firmware: Test",
+      "type": "shell",
+      "group": { "kind": "test", "isDefault": true },
+      "command": "pwsh",
+      "args": [
+        "-NoProfile", "-ExecutionPolicy", "Bypass",
+        "-File", "${workspaceFolder}/etc/test.ps1"
+      ],
+      "problemMatcher": "$msCompile",
+      "detail": "Build and run the host-side firmware tests in test/ (MSVC, no board needed)."
+    },
+    {
       "label": "Arduino: List boards",
       "type": "shell",
       "command": "pwsh",
