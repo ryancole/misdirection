@@ -61,6 +61,9 @@ struct FakeMouse {
   uint16_t screenW = 0, screenH = 0;
   uint16_t x = 0, y = 0;
   int      moves = 0;
+  int      relMoves = 0;                 // Mouse.move() calls
+  std::vector<int8_t> relSteps;          // (dx, dy) pairs, in call order
+  int32_t  relSumX = 0, relSumY = 0;     // total relative distance sent
   int      buttonSets = 0;
   int      scrolls = 0;
   uint8_t  buttons[5] = { 0, 0, 0, 0, 0 };
@@ -68,6 +71,11 @@ struct FakeMouse {
 
   void screenSize(uint16_t w, uint16_t h) { screenW = w; screenH = h; }
   void moveTo(uint16_t nx, uint16_t ny) { x = nx; y = ny; moves++; }
+  void move(int8_t dx, int8_t dy) {
+    relMoves++;
+    relSteps.push_back(dx); relSteps.push_back(dy);
+    relSumX += dx; relSumY += dy;
+  }
   void set_buttons(uint8_t l, uint8_t m, uint8_t r, uint8_t b, uint8_t f) {
     buttons[0] = l; buttons[1] = m; buttons[2] = r; buttons[3] = b; buttons[4] = f;
     buttonSets++;

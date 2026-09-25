@@ -26,6 +26,7 @@ TYPE_NAMES = {
     0x05: "MOUSE_WHEEL",
     0x06: "SCREEN_SIZE",
     0x07: "PING",
+    0x08: "MOUSE_MOVE_REL",
     0x7F: "FILE_DELAY",
     0x80: "PONG",
     0x81: "NACK",
@@ -45,6 +46,10 @@ def direction_of(type_):
 
 def u16(v):
     return bytes([v & 0xFF, (v >> 8) & 0xFF])
+
+
+def i16(v):
+    return u16(v & 0xFFFF)
 
 
 def u32(v):
@@ -71,6 +76,9 @@ CASES = [
     ("mouse_wheel_down_1",    0x05, bytes([0xFF, 0x00]),        {"vert": -1, "horiz": 0}),
     ("screen_size_1920_1080", 0x06, u16(1920) + u16(1080),      {"width": 1920, "height": 1080}),
     ("ping",                  0x07, b"",                        {}),
+    ("mouse_move_rel_10_-5",  0x08, i16(10) + i16(-5),          {"dx": 10, "dy": -5}),
+    ("mouse_move_rel_300_0",  0x08, i16(300) + i16(0),          {"dx": 300, "dy": 0}),
+    ("mouse_move_rel_extremes", 0x08, i16(-32768) + i16(32767), {"dx": -32768, "dy": 32767}),
     ("pong_v1",               0x80, bytes([PROTOCOL_VERSION]),  {"version": PROTOCOL_VERSION}),
     ("nack_checksum",         0x81, bytes([0x01]),              {"reason": 1}),
     # .msdr file records: micros since the previous frame in the file.

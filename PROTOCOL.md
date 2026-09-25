@@ -27,8 +27,20 @@ payload is not a framing hazard except while resyncing.
 | 0x05 | MOUSE_WHEEL | 2   | vert:i8, horiz:i8                         |
 | 0x06 | SCREEN_SIZE | 4   | w:u16, h:u16                              |
 | 0x07 | PING        | 0   | -                                         |
+| 0x08 | MOUSE_MOVE_REL | 4 | dx:i16, dy:i16 (relative, in HID units)  |
 
 Button mask: bit0 left, bit1 right, bit2 middle, bit3 back, bit4 forward.
+
+MOUSE_MOVE is absolute (see Coordinates). MOUSE_MOVE_REL is a relative
+nudge for the cases absolute positioning does not reach: applications
+that capture the cursor and read raw motion (games, remote-desktop
+clients), or a host that does not know the target's screen size. It is
+not coalesced -- every frame is applied, in order, because dropping one
+loses distance. A delta beyond +/-127 is split into several HID reports
+of at most 127 each, so a single frame can move up to +/-32767 on each
+axis. Units are the HID relative report's, which the target OS scales by
+its own pointer speed and acceleration; do not expect a pixel-exact
+landing.
 
 ## Teensy -> host
 
@@ -125,9 +137,11 @@ scaling from screen pixels happens inside the core.
 
 ## Coalescing
 
-Mouse motion is the only high-rate message. Drain everything available
-from Serial1 each pass, keep only the *latest* MOUSE_MOVE, and emit one
-HID report per pass. A PL2303 that buffers writes until its latency
+Absolute mouse motion is the only high-rate message that can be
+coalesced. Drain everything available from Serial1 each pass, keep only
+the *latest* MOUSE_MOVE, and emit one HID report per pass.
+MOUSE_MOVE_REL is applied immediately and never coalesced, since each
+frame carries distance rather than a position. A PL2303 that buffers writes until its latency
 timer fires will deliver several moves at once; replaying all of them
 just spends USB frames on stale positions.
 
@@ -206,6 +220,9 @@ test suite in any language can assert both directions. Both come from
 | MOUSE_WHEEL down 1           | `AB 05 02 FF 00 06` |
 | SCREEN_SIZE 1920x1080        | `AB 06 04 80 07 38 04 CD` |
 | PING                         | `AB 07 00 07` |
+| MOUSE_MOVE_REL (+10, -5)     | `AB 08 04 0A 00 FB FF 10` |
+| MOUSE_MOVE_REL (+300, 0)     | `AB 08 04 2C 01 00 00 39` |
+| MOUSE_MOVE_REL (-32768, +32767) | `AB 08 04 00 80 FF 7F 0A` |
 | PONG v1 (Teensy -> host)     | `AB 80 01 01 82` |
 | NACK checksum (Teensy -> host) | `AB 81 01 01 83` |
 | FILE_DELAY 0 us (file only)  | `AB 7F 04 00 00 00 00 83` |
