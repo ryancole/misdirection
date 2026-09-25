@@ -43,6 +43,7 @@ enum : uint8_t {
   MSG_MOUSE_WHEEL = 0x05,
   MSG_SCREEN_SIZE = 0x06,
   MSG_PING        = 0x07,
+  MSG_MOUSE_MOVE_REL = 0x08,
 };
 
 enum : uint8_t {
@@ -162,6 +163,19 @@ static void keyUp(uint8_t usage) {
   // exactly what a host does when recovering from a dropped frame.
 }
 
+// A relative report carries at most +/-127 per axis, so a larger delta
+// goes out as several reports. Applied immediately, not coalesced: each
+// frame is distance, and dropping one loses it.
+static void moveRelative(int16_t dx, int16_t dy) {
+  while (dx != 0 || dy != 0) {
+    int8_t sx = (int8_t)(dx > 127 ? 127 : dx < -127 ? -127 : dx);
+    int8_t sy = (int8_t)(dy > 127 ? 127 : dy < -127 ? -127 : dy);
+    Mouse.move(sx, sy);
+    dx = (int16_t)(dx - sx);
+    dy = (int16_t)(dy - sy);
+  }
+}
+
 static void panic() {
   keyMods = 0;
   for (uint8_t i = 0; i < 6; i++) keySlots[i] = 0;
@@ -228,6 +242,12 @@ static void handleFrame(uint8_t type, const uint8_t *p, uint8_t len) {
       moveX = (uint16_t)(p[0] | (p[1] << 8));
       moveY = (uint16_t)(p[2] | (p[3] << 8));
       movePending = true;      // coalesced; emitted once per loop pass
+      break;
+
+    case MSG_MOUSE_MOVE_REL:
+      if (len != 4) { sendNack(NACK_LENGTH); return; }
+      moveRelative((int16_t)(p[0] | (p[1] << 8)),
+                   (int16_t)(p[2] | (p[3] << 8)));
       break;
 
     case MSG_MOUSE_BTN:

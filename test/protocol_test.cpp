@@ -74,6 +74,11 @@ static std::vector<uint8_t> fileDelay(uint32_t micros) {
                         (uint8_t)(micros >> 16), (uint8_t)(micros >> 24) });
 }
 
+static std::vector<uint8_t> moveRel(int16_t dx, int16_t dy) {
+  return encode(MSG_MOUSE_MOVE_REL, { (uint8_t)dx, (uint8_t)(dx >> 8),
+                                      (uint8_t)dy, (uint8_t)(dy >> 8) });
+}
+
 static void arm(bool on) { fake::pinLevels[PIN_ARM] = on ? LOW : HIGH; }
 
 // Fresh firmware: boot, discard the boot PONG, armed by default.
@@ -96,7 +101,8 @@ static void send(const std::vector<uint8_t> &bytes) {
 
 static bool noHidActivity() {
   return Keyboard.sends == 0 && Keyboard.releaseAlls == 0 &&
-         Mouse.moves == 0 && Mouse.buttonSets == 0 && Mouse.scrolls == 0;
+         Mouse.moves == 0 && Mouse.relMoves == 0 &&
+         Mouse.buttonSets == 0 && Mouse.scrolls == 0;
 }
 
 #define TEST(name) static void name(); struct name##_reg { name##_reg() { tests().push_back({ #name, name }); } } name##_inst; static void name()
@@ -133,6 +139,75 @@ TEST(key_down_updates_report) {
   CHECK(fake::tx.empty());
   CHECK(Keyboard.sends == 1);
   CHECK(Keyboard.keys[0] == 0x04);
+}
+
+// MOUSE_MOVE_REL (0x08): relative delta, split into +/-127 steps, never
+// coalesced.
+
+TEST(move_rel_small_is_one_report) {
+  reset();
+  send(moveRel(10, -5));
+  CHECK(fake::tx.empty());
+  CHECK(Mouse.relMoves == 1);
+  CHECK(Mouse.relSteps == std::vector<int8_t>({ 10, -5 }));
+  CHECK(Mouse.moves == 0);   // must not touch the absolute path
+}
+
+TEST(move_rel_large_is_split_into_127_steps) {
+  reset();
+  send(moveRel(300, 0));
+  CHECK(Mouse.relMoves == 3);
+  CHECK(Mouse.relSteps == std::vector<int8_t>({ 127, 0, 127, 0, 46, 0 }));
+  CHECK(Mouse.relSumX == 300 && Mouse.relSumY == 0);
+}
+
+TEST(move_rel_extremes_sum_exactly) {
+  reset();
+  send(moveRel(-32768, 32767));
+  CHECK(Mouse.relSumX == -32768);
+  CHECK(Mouse.relSumY == 32767);
+  // ceil(32768 / 127) = 259 reports; the longer axis sets the count.
+  CHECK(Mouse.relMoves == 259);
+}
+
+TEST(move_rel_zero_sends_nothing) {
+  reset();
+  send(moveRel(0, 0));
+  CHECK(Mouse.relMoves == 0);
+  CHECK(fake::tx.empty());
+}
+
+TEST(move_rel_is_not_coalesced) {
+  // Two frames in one pass both apply; absolute MOUSE_MOVE would keep
+  // only the last.
+  reset();
+  std::vector<uint8_t> stream = moveRel(5, 5);
+  std::vector<uint8_t> second = moveRel(-2, 3);
+  stream.insert(stream.end(), second.begin(), second.end());
+  send(stream);
+  CHECK(Mouse.relMoves == 2);
+  CHECK(Mouse.relSumX == 3 && Mouse.relSumY == 8);
+}
+
+TEST(move_rel_bad_length_is_nack_3) {
+  reset();
+  send(encode(MSG_MOUSE_MOVE_REL, { 1, 2 }));
+  CHECK_TX(nack(NACK_LENGTH));
+  CHECK(noHidActivity());
+}
+
+TEST(move_rel_disarmed_is_dropped) {
+  reset();
+  arm(false);
+  send(moveRel(50, 50));
+  CHECK_TX(nack(NACK_DISARMED));
+  CHECK(noHidActivity());
+}
+
+TEST(move_rel_vectors_match_spec) {
+  CHECK(moveRel(10, -5)        == std::vector<uint8_t>({ 0xAB, 0x08, 0x04, 0x0A, 0x00, 0xFB, 0xFF, 0x10 }));
+  CHECK(moveRel(300, 0)        == std::vector<uint8_t>({ 0xAB, 0x08, 0x04, 0x2C, 0x01, 0x00, 0x00, 0x39 }));
+  CHECK(moveRel(-32768, 32767) == std::vector<uint8_t>({ 0xAB, 0x08, 0x04, 0x00, 0x80, 0xFF, 0x7F, 0x0A }));
 }
 
 // FILE_DELAY (0x7F) is a .msdr file record and never valid on the wire.
