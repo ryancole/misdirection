@@ -100,6 +100,20 @@ FILE_DELAY it sleeps for `micros` and emits nothing; on anything else it
 writes the frame bytes to the wire unchanged. A file with no FILE_DELAY
 records is a valid file that replays as fast as the link allows.
 
+### Reading a file that is still being written
+
+A `.msdr` file may be read while its writer is still appending to it.
+A reader that hits end of file exactly on a frame boundary must treat
+that as "no more data yet", not as a truncated file. Only a frame cut
+off partway through is incomplete, and the reader should wait for the
+rest of it rather than resync past it.
+
+A live follower that sends frames as they are appended may skip
+FILE_DELAY records instead of sleeping on them, because the writer
+already timed the frames. This changes nothing on the wire: every frame
+a follower sends is an ordinary wire message, so the firmware and the
+protocol version stay the same.
+
 ## Keyboard state lives in the firmware
 
 Raw HID usage codes go on the wire; the firmware owns the report. This

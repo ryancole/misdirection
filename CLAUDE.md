@@ -1,5 +1,20 @@
 # misdirection — project context
 
+## How it's used (mind-control)
+
+The host-side client is mind-control, an AI coaching tool. Its VODs are
+screen recordings from the player's own view (camera lock), not `.rofl`
+replays, and the coach learns from them. mind-control writes the coach's
+decisions to `.msdr` files:
+
+- **Timed playback** (the default) replays a finished recording from its
+  start, over a VOD.
+- **Follow mode** (`--follow`) plays decisions as they're written, live,
+  in a **practice-mode game against bots only**. No other people are in
+  the game, and only Ryan runs this software.
+
+The `.msdr` player and `--follow` live in the client repo, not here.
+
 ## What this is
 
 Firmware for a **Teensy 4.1 that Ryan built and physically owns**. It
